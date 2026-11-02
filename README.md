@@ -1,12 +1,12 @@
 # Segment Morph Studio
 
-A browser-local editor that morphs three uploaded SVG line drawings in a configurable, automatically repeating sequence. Each leg has independently adjustable movement and hold durations. Export animated SVG, standalone HTML, single SVG frame, or a JSON project. SVG export FPS is configurable; stroke color and stroke width may be forced to a uniform value in preview and exports.
+A browser-local editor that morphs uploaded SVG line drawings in a configurable, automatically repeating sequence. Each step has independently adjustable movement and hold durations. Export animated SVG, standalone HTML, single SVG frames, or JSON projects. Export FPS and stroke color/weight overrides are configurable.
 
-## Privacy / architecture
+## Privacy and architecture
 
-Uploaded artwork and projects are **not transmitted to any server**. The app is served as static files. A dedicated browser Web Worker runs the Python geometry planner using Pyodide WebAssembly; all geometry calculations, preview evaluation and exports occur in the user's browser. A pinned Pyodide runtime and the open-source `networkx` dependency are downloaded from jsDelivr during initialization; those requests contain no artwork or project data. An internet connection is required for initial runtime loading. Pyodide startup may be slow on first visit.
+Uploaded artwork and projects are **not transmitted to any server**. The site serves static assets; a browser Web Worker runs the Python geometry planner using Pyodide WebAssembly. All geometry calculations and exports occur in the user's browser. A pinned Pyodide runtime and open-source dependencies are downloaded from jsDelivr when the engine initializes. Requests to this CDN do not contain uploaded artwork or project data.
 
-Only SVG line drawings with supported geometric elements are accepted. The drawing parser deliberately rejects scripts, external objects and non-linear geometry. Uploaded SVG text is parsed in Python and never injected into the DOM as HTML.
+SVG parsing is restricted to supported vector line geometry. Untrusted SVG input is parsed by the geometry engine, not injected as HTML.
 
 ## Run locally
 
@@ -15,24 +15,28 @@ cd public && python3 -m http.server 8775 --bind 127.0.0.1
 # Open http://127.0.0.1:8775/
 ```
 
-For the public Cloudflare route, assets are mounted at `/segment-morph/`. There is no application API, user-data storage, analytics, or backend computation.
-
 ## Cloudflare Workers deployment
 
-This repository includes a `wrangler.toml` with static assets mounted at `/segment-morph` and a path-scoped Worker route for the `appmogged.com` zone. Wrangler 4.148+ is required for `assets.base_path`.
+The project is a static-asset Worker with a small routing script in `src/worker.js`. It **does not use** `assets.base_path` (which requires an account-side feature flag). Cloudflare's `ASSETS` binding serves assets from `public/`; the Worker strips the application path prefix before fetching them.
+
+Deploy from the GitHub-connected Cloudflare Worker or locally with:
 
 ```sh
 npm install
-npx wrangler login
+npm run check
 npm run deploy
 ```
 
-The `appmogged.com` domain must be a Cloudflare-managed proxied zone with permission to add a Worker route. Check any existing Worker routes before deployment; path precedence and application availability must be validated on the live zone. This config does not change unrelated site files or routes. No site has been deployed merely by pushing this repository.
+The repository intentionally contains **no production hostname or custom route**. In the Cloudflare dashboard, add a Worker route for `your-domain.example/segment-morph*` to the deployed Worker (the hostname must be a proxied zone in your account). Use an equivalent more restrictive route if desired. The app automatically redirects `/segment-morph` to `/segment-morph/`. For initial testing, the Worker also serves the app from the root of its assigned `workers.dev` hostname.
+
+The `/segment-morph` path is a public URL prefix, not a credential. Changing the application path requires adjusting `APP_PATH` in `src/worker.js` and the corresponding dashboard route. It does not require changing any hostname in source control.
+
+Note: If existing Workers or routing rules already serve a matching path on your domain, review route precedence before assigning this Worker.
 
 ## Project compatibility
 
-Projects with `schema_version` 6, 7 or 8 load into v0.9. Missing FPS uses 60, and missing visual override settings default to disabled. Saved v0.9 projects add `export.color_override` and `export.width_override` while retaining existing baked animation frames.
+Projects with `schema_version` 6, 7, or 8 load in v0.9.1. Missing FPS defaults to 60; missing appearance overrides default to disabled. Project files can store original uploaded SVG text and calculated animation data, but no private files are bundled in this repository.
 
 ## Limitations
 
-The graph matcher and higher-dimensional unfolding are heuristic. Some intermediate frames can still contain line crossings and visually busy structures. Each transition has a fixed number of motion samples; SVG export re-samples at the requested FPS, while standalone HTML interpolates during `requestAnimationFrame`.
+The graph matching and higher-dimensional unfolding are heuristic. Some intermediate frames may contain crossing edges or busy geometry. Exported SVG uses sampled frames at a configurable FPS, while standalone HTML interpolates during `requestAnimationFrame`.

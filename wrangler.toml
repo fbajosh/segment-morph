@@ -1,11 +1,10 @@
 name = "segment-morph"
 compatibility_date = "2026-11-01"
-# Configure on an existing Cloudflare zone. This Worker only intercepts this path.
-routes = [
-  { pattern = "appmogged.com/segment-morph*", zone_name = "appmogged.com" }
-]
+main = "./src/worker.js"
 
+# The URL hostname/route is intentionally configured in the Cloudflare dashboard,
+# not in this public repository.
 [assets]
 directory = "./public"
-base_path = "/segment-morph"
-not_found_handling = "single-page-application"
+binding = "ASSETS"
+run_worker_first = true

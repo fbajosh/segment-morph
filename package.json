@@ -1,12 +1,15 @@
 {
   "name": "segment-morph",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
+  "type": "module",
   "description": "Client-side SVG wireframe animation editor",
   "scripts": {
     "dev": "cd public && python3 -m http.server 8775 --bind 127.0.0.1",
     "deploy": "wrangler deploy",
-    "check": "node --check public/assets/app.js && node --check public/assets/engine-worker.mjs"
+    "check": "node --check src/worker.js && node --check public/assets/app.js && node --check public/assets/engine-worker.mjs && node --test tests/*.test.mjs"
   },
-  "devDependencies": {"wrangler": "^4.148.0"}
+  "devDependencies": {
+    "wrangler": "^4.148.0"
+  }
 }
