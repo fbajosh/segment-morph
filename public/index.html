@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Segment Morph Studio · SVG Sequence</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div><p class="eyebrow">CONNECTED VECTOR MOTION LAB</p><h1>Segment Morph Studio <span class="version">SVG SEQUENCE / 0.9</span></h1></div>
+  <div class="top-actions">
+    <button class="btn" id="clearProject">Clear project</button>
+    <label class="btn file-label">Open project <input id="openProject" type="file" accept=".json,application/json" hidden /></label>
+    <button class="btn primary" id="downloadProject">Save project</button>
+  </div>
+</header>
+<main class="app">
+  <aside class="sidebar">
+    <section>
+      <div class="section-head"><span class="section-number">01</span><h2>Upload three SVGs</h2></div>
+      <p class="small-copy">Each letter refers to one SVG line drawing. Upload or replace any state independently.</p>
+      <div class="state-list">
+        <label class="state-upload"><span class="state-letter">A</span><span class="state-copy"><strong>Image A</strong><small id="nameA">No file selected</small></span><span class="state-action">Upload SVG</span><input id="fileA" type="file" accept=".svg,image/svg+xml" /></label>
+        <label class="state-upload"><span class="state-letter">B</span><span class="state-copy"><strong>Image B</strong><small id="nameB">No file selected</small></span><span class="state-action">Upload SVG</span><input id="fileB" type="file" accept=".svg,image/svg+xml" /></label>
+        <label class="state-upload"><span class="state-letter">C</span><span class="state-copy"><strong>Image C</strong><small id="nameC">No file selected</small></span><span class="state-action">Upload SVG</span><input id="fileC" type="file" accept=".svg,image/svg+xml" /></label>
+      </div>
+      <div class="mini-grid three-states">
+        <div><span>SVG A</span><svg id="miniA" viewBox="0 0 900 640"></svg></div>
+        <div><span>SVG B</span><svg id="miniB" viewBox="0 0 900 640"></svg></div>
+        <div><span>SVG C</span><svg id="miniC" viewBox="0 0 900 640"></svg></div>
+      </div>
+      <p class="hint">Vector line drawings only. C is an uploaded SVG, not mathematically generated from B.</p>
+      <div class="statistics" id="graphStats"></div>
+    </section>
+    <section>
+      <div class="section-head"><span class="section-number">02</span><h2>Sequence</h2></div>
+      <label for="order" class="control-label">Play in this order</label>
+      <input type="text" id="order" class="order-input" value="A → B → A → C" spellcheck="false" autocomplete="off" aria-describedby="orderHelp" />
+      <p class="hint" id="orderHelp">Use A, B, C in any order, with repeats. Example: A → C → B → A. The last image always morphs back to the first.</p>
+      <div class="sequence-preview" id="sequencePreview" aria-live="polite"></div>
+      <p class="validation" id="orderError" role="alert"></p>
+      <div class="range-label"><label for="duration">Default movement duration</label><output id="durationValue">2.4 s</output></div>
+      <input id="duration" type="range" min="0.5" max="8" value="2.4" step="0.1" />
+      <div class="range-label"><label for="defaultHold">Default freeze after arrival</label><output id="defaultHoldValue">0.75 s</output></div>
+      <input id="defaultHold" type="range" min="0" max="8" value="0.75" step="0.05" />
+      <button id="process" class="btn primary fill">Generate loop</button>
+    </section>
+    <section>
+      <div class="section-head"><span class="section-number">03</span><h2>Matching</h2></div>
+      <label class="control-label" for="strategy">Planning objective</label>
+      <select id="strategy"><option value="coverage">Source geometry coverage</option><option value="spatial">Spatial proximity</option><option value="structure">Length / structure</option></select>
+      <div class="range-label"><label for="tolerance">Endpoint tolerance</label><output id="toleranceValue">0.50</output></div>
+      <input id="tolerance" type="range" min="0" max="2" step="0.05" value="0.5" />
+      <div class="statistics" id="planStats"></div>
+    </section>
+  </aside>
+  <section class="workarea">
+    <div class="canvas-head"><div><p class="eyebrow">ORDERED STATES · AUTOMATIC LOOP</p><h2 id="canvasTitle">A → B → A → C → A</h2></div><div class="frame-readout"><span id="progressLabel">0%</span><span class="dot">·</span><span id="timeLabel">0.0 s</span></div></div>
+    <div class="canvas-shell"><svg id="stage" viewBox="0 0 900 640" role="img" aria-label="Continuously looping line-drawing morph"></svg><div class="canvas-footer"><span id="stageStatus">Upload A, B, and C to begin · browser-local processing</span><span id="segmentCount">—</span></div></div>
+    <div class="phase-row" id="phaseRow"></div>
+    <div class="transport"><button class="transport-button" id="jumpStart" title="Start">⏮</button><button class="transport-button play" id="play" title="Play or pause">▶</button><button class="transport-button" id="jumpEnd" title="Last frame">⏭</button><input id="timeline" type="range" min="0" max="1000" value="0" step="1" aria-label="Loop timeline"/><label class="speed-label">Speed <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label></div>
+    <div class="notice"><strong>Continuous cycle</strong><span>Every adjacent pair gets its own directed transition. The closing transition from the final state to the first is included automatically. Return transitions are not simply reversed copies.</span></div>
+  </section>
+  <aside class="sidebar right-sidebar">
+    <section>
+      <div class="section-head"><span class="section-number">04</span><h2>Motion</h2></div>
+      <label class="control-label" for="easing">Easing</label><select id="easing"><option value="linear">Linear</option><option value="smooth">Smoothstep</option><option value="smoother">Smootherstep</option></select>
+      <div class="range-label"><label for="rotation">Forward XW rotation</label><output id="rotationValue">55°</output></div><input id="rotation" type="range" min="0" max="90" step="1" value="55" />
+      <div class="range-label"><label for="depth">4D depth</label><output id="depthValue">72%</output></div><input id="depth" type="range" min="0" max="1" step="0.02" value="0.72" />
+      <div class="range-label"><label for="stagger">Joint sequencing</label><output id="staggerValue">72%</output></div><input id="stagger" type="range" min="0" max="0.9" step="0.02" value="0.72" />
+      <div class="range-label"><label for="hinge">Hinge release</label><output id="hingeValue">45%</output></div><input id="hinge" type="range" min="0" max="0.9" step="0.02" value="0.45" />
+      <div class="range-label"><label for="twist">Return motion sweep</label><output id="twistValue">34°</output></div><input id="twist" type="range" min="0" max="75" step="1" value="34" />
+      <button id="applyMotion" class="btn fill">Recalculate motion</button>
+      <button id="resetMotion" class="btn fill">Reset settings</button>
+      <p class="hint">For uploaded SVGs with different topology, the unfolding remains an approximation. The drawing stays connected where its graph permits it.</p>
+    </section>
+    <section>
+      <div class="section-head"><span class="section-number">05</span><h2>Per-transition timing</h2></div>
+      <div id="durationRows"></div>
+      <p class="hint">Each step has separate move and freeze durations. The freeze holds the exact destination shape before the next transition, including at the loop boundary.</p>
+    </section>
+    <section>
+      <div class="section-head"><span class="section-number">06</span><h2>Export</h2></div>
+      <label class="control-label" for="exportFps">Animated SVG export FPS</label>
+      <select id="exportFps" aria-describedby="fpsHelp">
+        <option value="24">24 FPS</option>
+        <option value="30">30 FPS</option>
+        <option value="60" selected>60 FPS (default)</option>
+        <option value="120">120 FPS</option>
+      </select>
+      <p class="hint" id="fpsHelp">Controls the native SVG's discrete-frame sample rate. Hold intervals do not add frames. Standalone HTML uses your display's refresh rate.</p>
+      <div class="export-overrides">
+        <h3>Appearance overrides</h3>
+        <label class="override-row"><input type="checkbox" id="overrideColor" /> Force one stroke color</label>
+        <label class="control-label" for="strokeColor">Stroke color</label>
+        <input id="strokeColor" type="color" value="#000000" aria-label="Override stroke color" />
+        <label class="override-row"><input type="checkbox" id="overrideWidth" /> Force one stroke weight</label>
+        <label class="control-label" for="strokeWidth">Stroke width (SVG units)</label>
+        <input id="strokeWidth" type="number" min="0.1" max="100" step="0.1" value="2" />
+        <p class="hint">Overrides apply to preview, animated SVG, standalone HTML and individual frames; saved projects retain these settings.</p>
+      </div>
+      <button class="btn primary fill" id="downloadSVG">Export animated SVG</button>
+      <button class="btn fill" id="downloadHTML">Export standalone HTML</button>
+      <button class="btn fill" id="downloadFrame">Export current SVG frame</button>
+      <p class="hint">Shapes and animation calculations stay on your device; no uploaded SVGs are sent to a server. Initial startup downloads the Python WebAssembly runtime.</p>
+      <p class="hint">All formats preserve movement and freeze durations, including the automatic loop-closing hold.</p>
+    </section>
+  </aside>
+</main>
+<div id="toast" class="toast hidden" role="status"></div>
+<script type="module" src="./assets/app.js"></script>
+</body></html>

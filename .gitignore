@@ -1,0 +1,12 @@
+.DS_Store
+*.pyc
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+.wrangler/
+.dev.vars*
+.env*
+*.log
+*.zip
+*.gif
